@@ -18,7 +18,7 @@ resource "azurerm_kubernetes_cluster" "primary" {
     vnet_subnet_id = var.vnet_subnet_id
 
     node_labels = {
-      "prodigy-teams/role" = "system"
+      "ellf/role" = "system"
     }
   }
 
@@ -54,8 +54,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "workers" {
   auto_scaling_enabled = true
 
   node_labels = {
-    "prodigy-teams/node-class" = each.value.node_class
-    "prodigy-teams/worker"     = "true"
+    "ellf/node-class" = each.value.node_class
+    "ellf/worker"     = "true"
   }
 
   node_taints = each.value.gpu != null ? ["nvidia.com/gpu=present:NoSchedule"] : []

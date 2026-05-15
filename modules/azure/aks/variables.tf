@@ -65,7 +65,7 @@ variable "domain" {
 variable "k8s_namespace" {
   description = "Kubernetes namespace for PVCs and other namespaced resources."
   type        = string
-  default     = "prodigy-teams"
+  default     = "ellf"
 }
 
 # ----------------
@@ -113,19 +113,4 @@ variable "database_password" {
   description = "Database password to store in the infra K8s Secret."
   type        = string
   sensitive   = true
-}
-
-variable "database_host" {
-  description = "Database host to store in the infra K8s Secret."
-  type        = string
-}
-
-variable "database_user" {
-  description = "Database user to store in the infra K8s Secret."
-  type        = string
-}
-
-variable "database_name" {
-  description = "Database name to store in the infra K8s Secret."
-  type        = string
 }

@@ -105,7 +105,13 @@ variable "healthcheck_path" {
 variable "k8s_namespace" {
   description = "Kubernetes namespace for PVCs and other namespaced resources."
   type        = string
-  default     = "prodigy-teams"
+  default     = "ellf"
+}
+
+variable "k8s_service_account" {
+  description = "Kubernetes service account name for Workload Identity binding."
+  type        = string
+  default     = "ellf"
 }
 
 # ---------
@@ -166,19 +172,4 @@ variable "database_password" {
   description = "Database password to store in the infra K8s Secret."
   type        = string
   sensitive   = true
-}
-
-variable "database_host" {
-  description = "Database private IP to store in the infra K8s Secret."
-  type        = string
-}
-
-variable "database_user" {
-  description = "Database user to store in the infra K8s Secret."
-  type        = string
-}
-
-variable "database_name" {
-  description = "Database name to store in the infra K8s Secret."
-  type        = string
 }

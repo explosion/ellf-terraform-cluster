@@ -138,7 +138,7 @@ resource "aws_eks_node_group" "system" {
   }
 
   labels = {
-    "prodigy-teams/role" = "system"
+    "ellf/role" = "system"
   }
 
   depends_on = [
@@ -170,8 +170,8 @@ resource "aws_eks_node_group" "workers" {
   }
 
   labels = {
-    "prodigy-teams/node-class" = each.value.node_class
-    "prodigy-teams/worker"     = "true"
+    "ellf/node-class" = each.value.node_class
+    "ellf/worker"     = "true"
   }
 
   dynamic "taint" {

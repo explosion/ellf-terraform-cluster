@@ -34,7 +34,7 @@ resource "google_artifact_registry_repository_iam_member" "default" {
   project    = var.artifact_repos[count.index].project
   location   = var.artifact_repos[count.index].location
   repository = var.artifact_repos[count.index].name
-  role       = "roles/artifactregistry.reader"
+  role       = "roles/artifactregistry.writer"
   member     = google_service_account.gke_nodes.member
 }
 
@@ -68,6 +68,16 @@ resource "google_project_iam_member" "artifact_registry_reader" {
   project = var.gcp_project
   role    = "roles/artifactregistry.reader"
   member  = google_service_account.gke_nodes.member
+}
+
+# Allow the Kubernetes service account to impersonate the GCP service
+# account via Workload Identity. Without this binding the GKE metadata
+# proxy cannot mint tokens for the GSA, so any google-auth call from
+# inside the pod fails with "iam.serviceAccounts.getAccessToken denied".
+resource "google_service_account_iam_member" "workload_identity" {
+  service_account_id = google_service_account.gke_nodes.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.gcp_project}.svc.id.goog[${var.k8s_namespace}/${var.k8s_service_account}]"
 }
 
 # --------
@@ -215,7 +225,7 @@ resource "google_container_node_pool" "system" {
     }
 
     labels = {
-      "prodigy-teams/role" = "system"
+      "ellf/role" = "system"
     }
   }
 
@@ -257,8 +267,8 @@ resource "google_container_node_pool" "workers" {
     }
 
     labels = {
-      "prodigy-teams/node-class" = each.value.node_class
-      "prodigy-teams/worker"     = "true"
+      "ellf/node-class" = each.value.node_class
+      "ellf/worker"     = "true"
     }
 
     # GPU configuration

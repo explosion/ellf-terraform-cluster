@@ -184,8 +184,5 @@ module "cluster" {
 
   domain = var.domain
 
-  database_host     = module.database.database_address
-  database_name     = module.database.database_name
-  database_user     = module.database.database_user
   database_password = module.database.database_password
 }
