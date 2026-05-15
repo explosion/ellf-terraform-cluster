@@ -1,0 +1,39 @@
+# Terraform local state and lock files
+.terraform/
+.terraform.lock.hcl
+
+# State files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+errored.tfstate
+
+# Plan files
+*.tfplan
+
+# Variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
+
+# Auto-generated backend config
+backend.tf.json
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration
+.terraformrc
+terraform.rc
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
