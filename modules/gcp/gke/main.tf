@@ -227,6 +227,16 @@ resource "google_container_node_pool" "system" {
     labels = {
       "ellf/role" = "system"
     }
+
+    # Reserve the system pool for platform components (broker, traefik,
+    # cert-manager, NFS). Recipe Jobs lack this toleration and therefore
+    # cannot accidentally schedule here when their worker_type doesn't
+    # resolve or a customer leaves --worker-class unset.
+    taint {
+      key    = "ellf/role"
+      value  = "system"
+      effect = "NO_SCHEDULE"
+    }
   }
 
   lifecycle {
