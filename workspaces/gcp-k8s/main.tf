@@ -70,16 +70,16 @@ module "cluster" {
   gcp_zone = var.gcp_zone
   prefix = "cluster"
   network_name = google_compute_network.cluster.name
-  artifact_repos = concat(
-    [
-      {
-        project  = var.gcp_project
-        location = google_artifact_registry_repository.default.location
-        name     = google_artifact_registry_repository.default.repository_id
-      }
-    ],
-    var.external_artifact_repos,
-  )
+  # Write access only to the cluster's own repo; external repos (the
+  # shared release registry) are strictly read-only.
+  artifact_repos = [
+    {
+      project  = var.gcp_project
+      location = google_artifact_registry_repository.default.location
+      name     = google_artifact_registry_repository.default.repository_id
+    }
+  ]
+  readonly_artifact_repos = var.external_artifact_repos
 
   buckets = [google_storage_bucket.data-bucket.self_link]
   secret_ids = {}

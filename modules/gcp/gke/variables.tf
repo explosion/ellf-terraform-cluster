@@ -37,7 +37,13 @@ variable "buckets" {
 }
 
 variable "artifact_repos" {
-  description = "Artifact repositories the cluster should have access to."
+  description = "Artifact repositories the cluster should have WRITE access to (the cluster's own repos, e.g. for publishing ad-hoc recipe images)."
+  type        = list(any)
+  default     = []
+}
+
+variable "readonly_artifact_repos" {
+  description = "Artifact repositories the cluster should have READ-ONLY access to (e.g. the shared release registry images are pulled from). Repos here must never receive writer grants: user clusters must not be able to publish to shared registries."
   type        = list(any)
   default     = []
 }

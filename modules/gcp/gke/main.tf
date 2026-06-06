@@ -38,6 +38,17 @@ resource "google_artifact_registry_repository_iam_member" "default" {
   member     = google_service_account.gke_nodes.member
 }
 
+# Read-only repos (e.g. the shared release registry) get reader, never
+# writer — clusters must not be able to publish to shared registries.
+resource "google_artifact_registry_repository_iam_member" "readonly" {
+  count      = length(var.readonly_artifact_repos)
+  project    = var.readonly_artifact_repos[count.index].project
+  location   = var.readonly_artifact_repos[count.index].location
+  repository = var.readonly_artifact_repos[count.index].name
+  role       = "roles/artifactregistry.reader"
+  member     = google_service_account.gke_nodes.member
+}
+
 resource "google_secret_manager_secret_iam_member" "secret_ids" {
   count     = length(var.secret_ids)
   secret_id = var.secret_ids[count.index]
