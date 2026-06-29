@@ -235,6 +235,13 @@ resource "google_container_node_pool" "system" {
       mode = "GKE_METADATA"
     }
 
+    # Image streaming (gcfs): containerd lazily mounts image layers from
+    # Artifact Registry so containers start in seconds instead of blocking on a
+    # full image pull. Requires COS_CONTAINERD (the default image type here).
+    gcfs_config {
+      enabled = true
+    }
+
     labels = {
       "ellf/role" = "system"
     }
@@ -285,6 +292,14 @@ resource "google_container_node_pool" "workers" {
 
     workload_metadata_config {
       mode = "GKE_METADATA"
+    }
+
+    # Image streaming (gcfs): the recipe images are multi-GB, so a fresh
+    # autoscaled worker node would otherwise block on a full pull before the
+    # annotation/training server can start. Streaming starts the container
+    # almost immediately and fetches layers on demand.
+    gcfs_config {
+      enabled = true
     }
 
     labels = {
