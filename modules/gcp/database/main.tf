@@ -17,7 +17,7 @@ resource "google_sql_database_instance" "default" {
   settings {
     tier = "db-g1-small"
     ip_configuration {
-      ipv4_enabled = false
+      ipv4_enabled = true
       private_network = var.network_id
       enable_private_path_for_google_cloud_services = true
 
