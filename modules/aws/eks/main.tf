@@ -141,6 +141,17 @@ resource "aws_eks_node_group" "system" {
     "ellf/role" = "system"
   }
 
+  # Reserve the system pool for platform components (broker, traefik,
+  # cert-manager, NFS). Recipe Jobs lack this toleration and therefore
+  # cannot accidentally schedule here when their worker_type doesn't
+  # resolve or a customer leaves --worker-class unset. Mirrors the taint
+  # on the GKE system node pool (modules/gcp/gke/main.tf).
+  taint {
+    key    = "ellf/role"
+    value  = "system"
+    effect = "NO_SCHEDULE"
+  }
+
   depends_on = [
     aws_iam_role_policy_attachment.eks_worker_node_policy,
     aws_iam_role_policy_attachment.eks_cni_policy,

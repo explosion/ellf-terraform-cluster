@@ -20,6 +20,13 @@ resource "azurerm_kubernetes_cluster" "primary" {
     node_labels = {
       "ellf/role" = "system"
     }
+
+    # Reserve the system pool for platform components (broker, traefik,
+    # cert-manager, NFS). Recipe Jobs lack this toleration and therefore
+    # cannot accidentally schedule here when their worker_type doesn't
+    # resolve or a customer leaves --worker-class unset. Mirrors the taint
+    # on the GKE system node pool (modules/gcp/gke/main.tf).
+    node_taints = ["ellf/role=system:NoSchedule"]
   }
 
   identity {
@@ -49,8 +56,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "workers" {
   eviction_policy = each.value.spot ? "Delete" : null
   spot_max_price  = each.value.spot ? -1 : null
 
-  min_count          = each.value.min_size
-  max_count          = each.value.max_size
+  min_count            = each.value.min_size
+  max_count            = each.value.max_size
   auto_scaling_enabled = true
 
   node_labels = {
