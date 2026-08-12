@@ -89,8 +89,29 @@ module "cluster" {
   system_node_pool_size = var.system_node_pool_size
   worker_types = var.worker_types
 
+  enable_cost_allocation = var.enable_cost_allocation
+
   domain = var.domain
 
   database_password = module.database.database_password
+}
+
+# ------------
+# Cloud costs
+# ------------
+
+# Read access to this cluster's own rows of the shared billing export.
+# Absent (not just inert) until enable_cost_collection is flipped.
+module "billing" {
+  count  = var.enable_cost_collection ? 1 : 0
+  source = "../../modules/gcp/billing/"
+
+  gcp_project           = var.gcp_project
+  service_account_email = module.cluster.node_service_account_email
+
+  billing_project         = var.billing_export.project
+  billing_export_dataset  = var.billing_export.dataset
+  billing_export_table    = var.billing_export.table
+  billing_export_location = var.billing_export.location
 }
 

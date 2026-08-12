@@ -158,6 +158,12 @@ variable "cluster_version" {
   default     = null
 }
 
+variable "enable_cost_allocation" {
+  description = "Enable GKE cost allocation: node costs in the billing export are split per pod (by resource requests) and rows carry the pods' k8s labels. Attribution data only accrues from enablement onward, so enable early if per-workload cost breakdown is ever wanted."
+  type        = bool
+  default     = false
+}
+
 variable "system_node_pool_machine_type" {
   description = "Machine type for the system (default) node pool."
   type        = string

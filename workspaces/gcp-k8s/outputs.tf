@@ -60,3 +60,15 @@ output "broker_public_key_pem" {
   value       = module.cluster.broker_public_key_pem
   sensitive   = true
 }
+
+output "cost_view_table" {
+  description = "Fully-qualified BigQuery table of this cluster's cost view (null unless cost collection is enabled)."
+  value       = var.enable_cost_collection ? module.billing[0].cost_view_table : null
+
+  # Cross-variable checks in `variable "..." { validation }` need TF >= 1.9;
+  # an output precondition works on our >= 1.3 floor.
+  precondition {
+    condition     = !var.enable_cost_collection || var.billing_export != null
+    error_message = "billing_export must be set when enable_cost_collection is true."
+  }
+}

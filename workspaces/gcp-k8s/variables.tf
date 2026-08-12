@@ -95,3 +95,31 @@ variable "external_artifact_repos" {
   default = []
 }
 
+# ------------
+# Cloud costs
+# ------------
+# Both default off: cost features activate nothing by existing.
+
+variable "enable_cost_allocation" {
+  description = "Enable GKE cost allocation (per-pod cost attribution in the billing export). Data only accrues from enablement onward."
+  type        = bool
+  default     = false
+}
+
+variable "enable_cost_collection" {
+  description = "Provision read access to this cluster's rows of the billing export: an authorized view in the billing project plus a grant to the cluster's node SA. Requires billing_export."
+  type        = bool
+  default     = false
+}
+
+variable "billing_export" {
+  description = "Location of the BigQuery billing export (enabled once per billing account, in the Billing console — not by Terraform). Required when enable_cost_collection is true."
+  type = object({
+    project  = string
+    dataset  = string
+    table    = string
+    location = optional(string, "EU")
+  })
+  default = null
+}
+

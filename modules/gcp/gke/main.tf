@@ -205,6 +205,12 @@ resource "google_container_cluster" "primary" {
     workload_pool = "${var.gcp_project}.svc.id.goog"
   }
 
+  # Cost allocation: per-pod attribution of node costs in the billing
+  # export, keyed by pod k8s labels. Updatable in place.
+  cost_management_config {
+    enabled = var.enable_cost_allocation
+  }
+
   # Logging and monitoring
   logging_service    = "logging.googleapis.com/kubernetes"
   monitoring_service = "monitoring.googleapis.com/kubernetes"
