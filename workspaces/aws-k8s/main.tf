@@ -133,6 +133,40 @@ resource "aws_ecr_repository" "default" {
   }
 }
 
+# The broker builds ad-hoc recipe images in-process and pushes them over the
+# ECR HTTP API using the node role, targeting per-image repositories under
+# the cluster namespace (e.g. "<repository_name>/recipes") that it creates
+# on first publish.  The managed AmazonEC2ContainerRegistryReadOnly policy
+# attached in the eks module only covers pulls.
+resource "aws_iam_role_policy" "nodes_ecr_push" {
+  name = "${var.repository_name}-ecr-push"
+  role = module.cluster.node_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:BatchGetImage",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload",
+          "ecr:PutImage",
+          "ecr:CreateRepository",
+          "ecr:DescribeRepositories",
+        ]
+        Resource = [
+          aws_ecr_repository.default.arn,
+          "${aws_ecr_repository.default.arn}/*",
+        ]
+      },
+    ]
+  })
+}
+
 # --------------
 # S3 bucket
 # --------------
@@ -155,13 +189,13 @@ resource "aws_s3_bucket_versioning" "data" {
 # ---------
 
 module "database" {
-  source   = "../../modules/aws/database/"
-  prefix   = "cluster"
-  vpc_id   = aws_vpc.cluster.id
-  vpc_cidr = var.vpc_cidr
+  source     = "../../modules/aws/database/"
+  prefix     = "cluster"
+  vpc_id     = aws_vpc.cluster.id
+  vpc_cidr   = var.vpc_cidr
   subnet_ids = aws_subnet.private[*].id
-  user     = var.database_user
-  name     = var.database_name
+  user       = var.database_user
+  name       = var.database_name
   depends_on = [aws_vpc.cluster]
 }
 
