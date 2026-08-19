@@ -17,6 +17,14 @@ resource "google_filestore_instance" "nfs" {
     network = var.network_name
     modes   = ["MODE_IPV4"]
   }
+
+  # Filestore's direct peering and the GKE private control plane peering
+  # both mutate the VPC's peering config, and GCP only allows one peering
+  # operation per network at a time — creating them concurrently fails
+  # with "a peering operation is in progress". The PV that consumes this
+  # instance waits on the system node pool anyway, so ordering after the
+  # cluster costs nothing.
+  depends_on = [google_container_cluster.primary]
 }
 
 # -------------------------------------------

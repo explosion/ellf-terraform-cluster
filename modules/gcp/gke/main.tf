@@ -215,8 +215,15 @@ resource "google_container_cluster" "primary" {
   logging_service    = "logging.googleapis.com/kubernetes"
   monitoring_service = "monitoring.googleapis.com/kubernetes"
 
+  # The workspace creates the VPC with delete_default_routes_on_create, so
+  # until default_route exists the private nodes have no egress at all —
+  # Private Google Access also routes via the default internet gateway, so
+  # nodes that boot first can't pull system images or register with the
+  # control plane.
   depends_on = [
     google_compute_subnetwork.gke_subnet,
+    google_compute_route.default_route,
+    google_compute_router_nat.default,
   ]
 }
 
