@@ -1,5 +1,5 @@
 locals {
-  gcp_region = substr(var.gcp_zone, 0, length(var.gcp_zone)-2)
+  gcp_region = substr(var.gcp_zone, 0, length(var.gcp_zone) - 2)
 }
 
 # TODO: Enable Service Networking API for this
@@ -11,14 +11,14 @@ locals {
 resource "google_sql_database_instance" "default" {
   # Need to leave name unspecified here, because we need it
   # it to be automatically assigned.
-  database_version = "POSTGRES_14"
-  region = local.gcp_region
+  database_version    = "POSTGRES_14"
+  region              = local.gcp_region
   deletion_protection = false
   settings {
     tier = "db-g1-small"
     ip_configuration {
-      ipv4_enabled = var.ipv4_enabled
-      private_network = var.network_id
+      ipv4_enabled                                  = var.ipv4_enabled
+      private_network                               = var.network_id
       enable_private_path_for_google_cloud_services = true
 
       #authorized_networks {
@@ -38,12 +38,12 @@ resource "google_sql_database_instance" "default" {
 }
 
 resource "random_string" "password" {
-  length = 32
+  length  = 32
   special = false
 }
 
 resource "random_string" "migration_password" {
-  length = 32
+  length  = 32
   special = false
 }
 

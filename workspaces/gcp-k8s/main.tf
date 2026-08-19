@@ -1,5 +1,5 @@
 locals {
-  gcp_region = substr(var.gcp_zone, 0, length(var.gcp_zone)-2)
+  gcp_region = substr(var.gcp_zone, 0, length(var.gcp_zone) - 2)
 }
 
 
@@ -7,8 +7,8 @@ provider "random" {
 }
 
 provider "google" {
-  project     = var.gcp_project
-  region      = local.gcp_region
+  project = var.gcp_project
+  region  = local.gcp_region
 }
 
 # -------------
@@ -17,9 +17,9 @@ provider "google" {
 
 
 resource "google_compute_network" "cluster" {
-  project = var.gcp_project
-  name = var.network_name
-  auto_create_subnetworks = false
+  project                         = var.gcp_project
+  name                            = var.network_name
+  auto_create_subnetworks         = false
   delete_default_routes_on_create = true
 }
 
@@ -39,9 +39,9 @@ resource "google_artifact_registry_repository" "default" {
 # --------------
 
 resource "google_storage_bucket" "data-bucket" {
-  name = "${var.gcp_project}-data"
-  project = var.gcp_project
-  location = var.bucket_location
+  name          = "${var.gcp_project}-data"
+  project       = var.gcp_project
+  location      = var.bucket_location
   force_destroy = true
 }
 
@@ -50,13 +50,13 @@ resource "google_storage_bucket" "data-bucket" {
 # ---------
 
 module "database" {
-  source = "../../modules/gcp/database/"
+  source      = "../../modules/gcp/database/"
   gcp_project = var.gcp_project
-  gcp_zone = var.gcp_zone
-  network_id = google_compute_network.cluster.id
-  user = var.database_user
-  name = var.database_name
-  depends_on = [google_compute_network.cluster]
+  gcp_zone    = var.gcp_zone
+  network_id  = google_compute_network.cluster.id
+  user        = var.database_user
+  name        = var.database_name
+  depends_on  = [google_compute_network.cluster]
 }
 
 # ---------
@@ -64,11 +64,11 @@ module "database" {
 # ---------
 
 module "cluster" {
-  source = "../../modules/gcp/gke"
-  gcp_project = var.gcp_project
-  gcp_region = local.gcp_region
-  gcp_zone = var.gcp_zone
-  prefix = "cluster"
+  source       = "../../modules/gcp/gke"
+  gcp_project  = var.gcp_project
+  gcp_region   = local.gcp_region
+  gcp_zone     = var.gcp_zone
+  prefix       = "cluster"
   network_name = google_compute_network.cluster.name
   # Write access only to the cluster's own repo; external repos (the
   # shared release registry) are strictly read-only.
@@ -81,13 +81,13 @@ module "cluster" {
   ]
   readonly_artifact_repos = var.external_artifact_repos
 
-  buckets = [google_storage_bucket.data-bucket.self_link]
+  buckets    = [google_storage_bucket.data-bucket.self_link]
   secret_ids = {}
   enable_ssh = false
 
   system_node_pool_machine_type = var.system_node_pool_machine_type
-  system_node_pool_size = var.system_node_pool_size
-  worker_types = var.worker_types
+  system_node_pool_size         = var.system_node_pool_size
+  worker_types                  = var.worker_types
 
   enable_cost_allocation = var.enable_cost_allocation
 
@@ -102,8 +102,10 @@ module "cluster" {
   # cluster races the database and fails with "a peering operation is in
   # progress on the local or peer network". The database_password input
   # above only ties the K8s secret to the database, not the cluster itself,
-  # so the ordering must be explicit.
-  depends_on = [module.database]
+  # so the ordering must be explicit. (Passed as a variable rather than
+  # module-level depends_on because the gke module configures its own
+  # kubernetes provider, which forbids depends_on on the module call.)
+  vpc_peering_dependency = module.database.vpc_connection
 }
 
 # ------------

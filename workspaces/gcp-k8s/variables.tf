@@ -8,7 +8,7 @@ variable "gcp_project" {
 
 variable "gcp_zone" {
   description = "The region in which all GCP resources will be launched."
-  type = string
+  type        = string
 }
 
 variable "domain" {
@@ -20,7 +20,7 @@ variable "domain" {
 # ---------------------
 
 variable "enable_ssh" {
-  type = bool
+  type    = bool
   default = true
 }
 
@@ -46,17 +46,17 @@ variable "worker_types" {
 
 variable "system_node_pool_machine_type" {
   description = "Machine type for system node pool"
-  type = string
+  type        = string
 }
 
 variable "system_node_pool_size" {
   description = "Size of system node pool"
-  type = string
+  type        = string
 }
 
 variable "bucket_location" {
   description = "The location to store the bucket"
-  default = "EU"
+  default     = "EU"
 }
 
 # ------------------
@@ -65,14 +65,14 @@ variable "bucket_location" {
 
 variable "network_name" {
   description = "Name of the network"
-  type = string
-  default = "cluster-network"
+  type        = string
+  default     = "cluster-network"
 }
 
 variable "database_name" {
   description = "Name of the DB"
-  type = string
-  default = "prodigy-db"
+  type        = string
+  default     = "prodigy-db"
 }
 
 variable "database_user" {
@@ -81,8 +81,8 @@ variable "database_user" {
 
 variable "repository_id" {
   description = "Repository ID for container registry"
-  type = string
-  default = "cluster-docker"
+  type        = string
+  default     = "cluster-docker"
 }
 
 variable "external_artifact_repos" {

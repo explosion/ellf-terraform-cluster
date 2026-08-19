@@ -9,7 +9,7 @@ resource "google_filestore_instance" "nfs" {
   tier     = var.filestore_tier
 
   file_shares {
-    name       = var.filestore_share_name
+    name        = var.filestore_share_name
     capacity_gb = var.filestore_capacity_gb
   }
 

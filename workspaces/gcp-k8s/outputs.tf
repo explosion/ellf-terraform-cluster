@@ -7,7 +7,7 @@ output "database_user" {
 }
 
 output "database_password" {
-  value = module.database.database_password
+  value     = module.database.database_password
   sensitive = true
 }
 

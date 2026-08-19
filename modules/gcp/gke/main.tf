@@ -169,6 +169,13 @@ resource "google_compute_firewall" "allow_ssh" {
 # GKE Cluster
 # -----------
 
+# depends_on cannot reference variables directly, so this anchors the
+# caller-supplied peering dependency (see variables.tf) as a resource the
+# cluster can wait on.
+resource "terraform_data" "vpc_peering_dependency" {
+  input = var.vpc_peering_dependency
+}
+
 resource "google_container_cluster" "primary" {
   name     = "${var.prefix}-gke"
   location = var.gcp_zone
@@ -224,6 +231,7 @@ resource "google_container_cluster" "primary" {
     google_compute_subnetwork.gke_subnet,
     google_compute_route.default_route,
     google_compute_router_nat.default,
+    terraform_data.vpc_peering_dependency,
   ]
 }
 

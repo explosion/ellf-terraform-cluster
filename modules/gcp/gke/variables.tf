@@ -27,6 +27,12 @@ variable "network_name" {
   type        = string
 }
 
+variable "vpc_peering_dependency" {
+  description = "Opaque ordering handle: pass an output of any resource that peers with the VPC (e.g. a Cloud SQL service networking connection) to make this module's own peering operations (GKE private control plane, Filestore) wait for it. GCP allows only one peering operation per network at a time."
+  type        = any
+  default     = null
+}
+
 # ----
 # IAM
 # ----
