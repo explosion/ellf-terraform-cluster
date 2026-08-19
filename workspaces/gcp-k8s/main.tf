@@ -94,6 +94,16 @@ module "cluster" {
   domain = var.domain
 
   database_password = module.database.database_password
+
+  # The database module's service networking connection is a VPC peering
+  # operation, and so are the GKE private control plane setup and the
+  # Filestore direct peering inside the cluster module. GCP allows only
+  # one peering operation per network at a time; without this edge the
+  # cluster races the database and fails with "a peering operation is in
+  # progress on the local or peer network". The database_password input
+  # above only ties the K8s secret to the database, not the cluster itself,
+  # so the ordering must be explicit.
+  depends_on = [module.database]
 }
 
 # ------------
