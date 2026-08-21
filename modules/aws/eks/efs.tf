@@ -17,11 +17,18 @@ resource "aws_security_group" "efs" {
   name   = "${var.prefix}-efs-sg"
   vpc_id = var.vpc_id
 
+  # Managed node groups launched without a launch template attach the
+  # EKS-created cluster security group to their instances, not
+  # aws_security_group.eks_nodes — so the cluster SG must be allowed here or
+  # all NFS traffic is silently dropped and pods hang in ContainerCreating.
   ingress {
-    from_port       = 2049
-    to_port         = 2049
-    protocol        = "tcp"
-    security_groups = [aws_security_group.eks_nodes.id]
+    from_port = 2049
+    to_port   = 2049
+    protocol  = "tcp"
+    security_groups = [
+      aws_security_group.eks_nodes.id,
+      aws_eks_cluster.primary.vpc_config[0].cluster_security_group_id,
+    ]
   }
 
   egress {

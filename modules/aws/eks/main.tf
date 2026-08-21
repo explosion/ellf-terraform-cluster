@@ -117,6 +117,27 @@ resource "aws_eks_addon" "efs_csi" {
   cluster_name = aws_eks_cluster.primary.name
   addon_name   = "aws-efs-csi-driver"
 
+  # At provision time the tainted system node is often the only node in the
+  # cluster (worker pools default to min_size 0), so the controller must
+  # tolerate the system taint or the addon hangs DEGRADED with its pods
+  # unschedulable until the terraform timeout.
+  configuration_values = jsonencode({
+    controller = {
+      tolerations = [
+        {
+          key      = "ellf/role"
+          value    = "system"
+          effect   = "NoSchedule"
+          operator = "Equal"
+        },
+        {
+          key      = "CriticalAddonsOnly"
+          operator = "Exists"
+        },
+      ]
+    }
+  })
+
   depends_on = [aws_eks_node_group.system]
 }
 
@@ -172,7 +193,11 @@ resource "aws_eks_node_group" "workers" {
   subnet_ids      = var.private_subnet_ids
   instance_types  = [each.value.instance_type]
   capacity_type   = each.value.spot ? "SPOT" : "ON_DEMAND"
-  ami_type        = each.value.gpu != null ? "AL2_x86_64_GPU" : "AL2_x86_64"
+  # AL2 AMI types are rejected on Kubernetes >= 1.33 (and Amazon Linux 2 is
+  # EOL), so worker pools must use AL2023 to run on any cluster_version AWS
+  # still supports. The GPU variant is AL2023_x86_64_NVIDIA — the naming
+  # scheme differs from AL2's "_GPU" suffix.
+  ami_type = each.value.gpu != null ? "AL2023_x86_64_NVIDIA" : "AL2023_x86_64_STANDARD"
 
   scaling_config {
     desired_size = each.value.min_size

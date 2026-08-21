@@ -103,7 +103,10 @@ variable "efs_capacity_gb" {
 variable "cluster_version" {
   description = "EKS Kubernetes version."
   type        = string
-  default     = "1.29"
+  # Must be a version AWS still offers under standard support, and must stay
+  # >= 1.33-compatible with the AL2023 ami_type on the worker node groups —
+  # bumping one without the other breaks node group creation.
+  default = "1.34"
 }
 
 variable "system_node_pool_instance_type" {

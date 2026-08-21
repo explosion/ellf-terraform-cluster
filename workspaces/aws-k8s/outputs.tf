@@ -11,8 +11,20 @@ output "database_password" {
   sensitive = true
 }
 
+# On AWS this is the RDS DNS endpoint, not a literal IP — RDS never exposes
+# a stable address. Consumers that need a CIDR (the broker NetworkPolicy's
+# postgres egress rule) must use database_egress_cidr instead of appending
+# /32 to this value.
 output "database_ip" {
   value = module.database.database_address
+}
+
+# CIDR covering the database for network-policy egress rules. The RDS
+# instance lives in the VPC's private subnets and its endpoint IP can change
+# on failover or maintenance, so the whole VPC range (scoped to port 5432 by
+# the consumer) is the stable answer.
+output "database_egress_cidr" {
+  value = var.vpc_cidr
 }
 
 output "cluster_name" {
