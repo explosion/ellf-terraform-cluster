@@ -88,7 +88,14 @@ resource "google_project_iam_member" "artifact_registry_reader" {
 resource "google_service_account_iam_member" "workload_identity" {
   service_account_id = google_service_account.gke_nodes.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${var.gcp_project}.svc.id.goog[${var.k8s_namespace}/${var.k8s_service_account}]"
+  # The pool is derived from the cluster resource rather than interpolating
+  # var.gcp_project directly: PROJECT.svc.id.goog only exists once a
+  # Workload-Identity-enabled cluster has been created in the project, and
+  # the resource reference gives Terraform the graph edge that orders this
+  # binding after the cluster create. With a plain string the binding races
+  # the cluster create and fails on a fresh project with
+  # "Error 400: Identity Pool does not exist".
+  member = "serviceAccount:${google_container_cluster.primary.workload_identity_config[0].workload_pool}[${var.k8s_namespace}/${var.k8s_service_account}]"
 }
 
 # --------
