@@ -22,10 +22,16 @@ resource "google_service_account" "gke_nodes" {
   display_name = "GKE node service account"
 }
 
-resource "google_storage_bucket_iam_member" "default" {
-  count  = length(var.buckets)
-  bucket = var.buckets[count.index]
-  role   = "roles/storage.admin"
+# Object read/write plus bucket listing on the cluster's data storage, the
+# same access the aws and azure modules grant. Not storage.admin: that also
+# lets the holder rewrite the bucket's IAM policy or delete the bucket.
+resource "google_storage_bucket_iam_member" "data" {
+  for_each = {
+    for pair in setproduct(var.buckets, ["roles/storage.objectAdmin", "roles/storage.legacyBucketReader"]) :
+    "${pair[0]}/${pair[1]}" => { bucket = pair[0], role = pair[1] }
+  }
+  bucket = each.value.bucket
+  role   = each.value.role
   member = google_service_account.gke_nodes.member
 }
 

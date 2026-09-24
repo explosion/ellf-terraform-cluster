@@ -3,8 +3,10 @@ terraform {
 
   required_providers {
     azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.0"
+      source = "hashicorp/azurerm"
+      # azurerm_federated_identity_credential.user_assigned_identity_id
+      # arrived in 4.70; 5.0 drops the default pool arguments used here.
+      version = ">= 4.70, < 5.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"

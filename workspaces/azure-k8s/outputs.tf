@@ -29,6 +29,20 @@ output "cluster_ca_certificate" {
   sensitive = true
 }
 
+output "cloud_storage_url" {
+  description = "The cluster's object storage, as the URL the broker serves as {__cloud_storage__}."
+  value       = "az://${azurerm_storage_container.data.name}"
+}
+
+output "cloud_storage_account_url" {
+  description = "Blob endpoint of the storage account behind cloud_storage_url; az:// URLs don't name the account."
+  value       = azurerm_storage_account.data.primary_blob_endpoint
+}
+
+output "workload_identity_client_id" {
+  value = module.cluster.workload_identity_client_id
+}
+
 output "nfs_pvc_name" {
   value = module.cluster.nfs_pvc_name
 }

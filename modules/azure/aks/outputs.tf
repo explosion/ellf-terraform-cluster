@@ -16,6 +16,11 @@ output "kubelet_identity_object_id" {
   value = azurerm_kubernetes_cluster.primary.kubelet_identity[0].object_id
 }
 
+output "workload_identity_client_id" {
+  description = "Client ID the cluster's service account annotates itself with (azure.workload.identity/client-id)."
+  value       = azurerm_user_assigned_identity.workload.client_id
+}
+
 output "node_resource_group" {
   value = azurerm_kubernetes_cluster.primary.node_resource_group
 }

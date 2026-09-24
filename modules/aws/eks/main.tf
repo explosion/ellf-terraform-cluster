@@ -142,6 +142,66 @@ resource "aws_eks_addon" "efs_csi" {
 }
 
 # ----------------------------
+# Workload identity – EKS Pod Identity
+# ----------------------------
+
+# Pods running as the cluster's Kubernetes service account (the broker and
+# the recipe Jobs it launches) assume this role, the counterpart of GKE
+# Workload Identity in modules/gcp/gke and AKS workload identity in
+# modules/azure/aks. Nodes keep only their node role, so storage access is
+# scoped to that one service account rather than to anything on the node.
+resource "aws_eks_addon" "pod_identity" {
+  cluster_name = aws_eks_cluster.primary.name
+  addon_name   = "eks-pod-identity-agent"
+}
+
+resource "aws_iam_role" "workload" {
+  name = "${var.prefix}-eks-workload-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "pods.eks.amazonaws.com" }
+      Action    = ["sts:AssumeRole", "sts:TagSession"]
+    }]
+  })
+}
+
+# Object read/write plus bucket listing on the cluster's data storage, the
+# same access the gcp and azure modules grant.
+resource "aws_iam_role_policy" "workload_buckets" {
+  count = length(var.buckets) > 0 ? 1 : 0
+  name  = "${var.prefix}-eks-workload-buckets"
+  role  = aws_iam_role.workload.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket", "s3:GetBucketLocation"]
+        Resource = [for b in var.buckets : "arn:aws:s3:::${b}"]
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Resource = [for b in var.buckets : "arn:aws:s3:::${b}/*"]
+      },
+    ]
+  })
+}
+
+resource "aws_eks_pod_identity_association" "workload" {
+  cluster_name    = aws_eks_cluster.primary.name
+  namespace       = var.k8s_namespace
+  service_account = var.k8s_service_account
+  role_arn        = aws_iam_role.workload.arn
+
+  depends_on = [aws_eks_addon.pod_identity]
+}
+
+# ----------------------------
 # System node group
 # ----------------------------
 

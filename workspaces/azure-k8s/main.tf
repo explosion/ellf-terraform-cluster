@@ -114,6 +114,10 @@ resource "azurerm_storage_account" "data" {
   location                 = azurerm_resource_group.cluster.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
+
+  # Access is identity-only and never public; objects are shared through
+  # short-lived SAS URLs instead.
+  allow_nested_items_to_be_public = false
 }
 
 resource "azurerm_storage_container" "data" {
@@ -155,6 +159,8 @@ module "cluster" {
 
   domain               = var.domain
   storage_account_name = var.storage_account_name
+
+  storage_container_ids = [azurerm_storage_container.data.id]
 
   database_password = module.database.database_password
 }

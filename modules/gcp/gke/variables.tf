@@ -38,7 +38,8 @@ variable "vpc_peering_dependency" {
 # ----
 
 variable "buckets" {
-  description = "Buckets the nodes should have access to."
+  description = "Names (not self_links) of the buckets the cluster's workloads can read and write."
+  type        = list(string)
   default     = []
 }
 

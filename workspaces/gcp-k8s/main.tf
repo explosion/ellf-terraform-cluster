@@ -43,6 +43,11 @@ resource "google_storage_bucket" "data-bucket" {
   project       = var.gcp_project
   location      = var.bucket_location
   force_destroy = true
+
+  # Access is IAM-only and never public; objects are shared through
+  # short-lived signed URLs instead.
+  uniform_bucket_level_access = true
+  public_access_prevention    = "enforced"
 }
 
 # ---------
@@ -81,7 +86,7 @@ module "cluster" {
   ]
   readonly_artifact_repos = var.external_artifact_repos
 
-  buckets    = [google_storage_bucket.data-bucket.self_link]
+  buckets    = [google_storage_bucket.data-bucket.name]
   secret_ids = {}
   enable_ssh = false
 

@@ -41,6 +41,11 @@ output "cluster_ca_certificate" {
   sensitive = true
 }
 
+output "cloud_storage_url" {
+  description = "The cluster's object storage, as the URL the broker serves as {__cloud_storage__}."
+  value       = "s3://${aws_s3_bucket.data.id}"
+}
+
 output "efs_id" {
   value = module.cluster.efs_id
 }

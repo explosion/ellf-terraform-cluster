@@ -68,6 +68,18 @@ variable "k8s_namespace" {
   default     = "ellf"
 }
 
+variable "k8s_service_account" {
+  description = "Kubernetes service account federated to the workload identity."
+  type        = string
+  default     = "ellf"
+}
+
+variable "storage_container_ids" {
+  description = "Resource IDs of the storage containers the cluster's workloads can read and write."
+  type        = list(string)
+  default     = []
+}
+
 # ----------------
 # Azure Files NFS
 # ----------------

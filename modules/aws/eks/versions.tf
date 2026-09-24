@@ -3,8 +3,9 @@ terraform {
 
   required_providers {
     aws = {
-      source  = "hashicorp/aws"
-      version = ">= 5.0"
+      source = "hashicorp/aws"
+      # aws_eks_pod_identity_association arrived in 5.29.
+      version = ">= 5.29, < 7.0"
     }
     kubernetes = {
       source  = "hashicorp/kubernetes"

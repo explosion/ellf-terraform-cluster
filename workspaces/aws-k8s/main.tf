@@ -176,6 +176,16 @@ resource "aws_s3_bucket" "data" {
   force_destroy = true
 }
 
+# Access is IAM-only and never public; objects are shared through
+# short-lived presigned URLs instead.
+resource "aws_s3_bucket_public_access_block" "data" {
+  bucket                  = aws_s3_bucket.data.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
 resource "aws_s3_bucket_versioning" "data" {
   bucket = aws_s3_bucket.data.id
 
@@ -215,6 +225,8 @@ module "cluster" {
   system_node_pool_size          = var.system_node_pool_size
   worker_types                   = var.worker_types
   enable_ssh                     = var.enable_ssh
+
+  buckets = [aws_s3_bucket.data.id]
 
   domain = var.domain
 

@@ -29,6 +29,11 @@ output "cluster_ca_certificate" {
   sensitive = true
 }
 
+output "cloud_storage_url" {
+  description = "The cluster's object storage, as the URL the broker serves as {__cloud_storage__}."
+  value       = "gs://${google_storage_bucket.data-bucket.name}"
+}
+
 output "filestore_ip" {
   value = module.cluster.filestore_ip
 }

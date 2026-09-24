@@ -74,6 +74,18 @@ variable "k8s_namespace" {
   default     = "ellf"
 }
 
+variable "k8s_service_account" {
+  description = "Kubernetes service account whose pods get the workload role (EKS Pod Identity)."
+  type        = string
+  default     = "ellf"
+}
+
+variable "buckets" {
+  description = "Names of the S3 buckets the cluster's workloads can read and write."
+  type        = list(string)
+  default     = []
+}
+
 # ---
 # EFS
 # ---
