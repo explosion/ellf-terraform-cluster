@@ -95,6 +95,16 @@ variable "external_artifact_repos" {
   default = []
 }
 
+# ---------------
+# Shared storage
+# ---------------
+
+variable "shared_storage_stage" {
+  description = "Which Filestore backs the shared volume: legacy, migrating, cutover or csi. Defaults to legacy so existing clusters keep their instance; see the gke module's variable for what each stage creates and deletes."
+  type        = string
+  default     = "legacy"
+}
+
 # ------------
 # Cloud costs
 # ------------

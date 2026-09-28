@@ -20,19 +20,13 @@ output "cluster_location" {
   value       = google_container_cluster.primary.location
 }
 
-output "filestore_ip" {
-  description = "IP address of the Filestore instance."
-  value       = google_filestore_instance.nfs.networks[0].ip_addresses[0]
-}
-
-output "filestore_share_name" {
-  description = "Name of the Filestore file share."
-  value       = var.filestore_share_name
-}
-
 output "nfs_pvc_name" {
-  description = "Name of the Kubernetes PVC for NFS storage."
-  value       = kubernetes_persistent_volume_claim_v1.nfs.metadata[0].name
+  description = "Name of the Kubernetes PVC for the shared volume workloads should mount (depends on shared_storage_stage)."
+  value = (
+    local.use_csi_volume
+    ? kubernetes_persistent_volume_claim_v1.filestore[0].metadata[0].name
+    : kubernetes_persistent_volume_claim_v1.nfs[0].metadata[0].name
+  )
 }
 
 output "node_service_account_email" {

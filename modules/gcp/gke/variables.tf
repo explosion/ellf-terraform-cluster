@@ -131,20 +131,49 @@ variable "k8s_service_account" {
 # Filestore
 # ---------
 
+variable "shared_storage_stage" {
+  description = <<-EOT
+    Which Filestore backs the cluster's shared ReadWriteMany volume. The
+    legacy volume is a Terraform-managed 1 TiB instance (the floor for
+    instances created directly); the CSI volume is provisioned by GKE's
+    Filestore CSI driver, which allows Basic HDD down to 100 GiB. Clusters
+    move one stage at a time, and only "csi" deletes the legacy instance:
+      legacy    — legacy instance only (PVC prodigy-nfs).
+      migrating — both exist; workloads still use the legacy volume. Copy
+                  the data across in this stage.
+      cutover   — both exist; workloads use the CSI volume (PVC
+                  prodigy-shared). The legacy instance is kept for rollback.
+      csi       — CSI volume only. Destroys the legacy instance and its data.
+  EOT
+  type        = string
+  default     = "legacy"
+
+  validation {
+    condition     = contains(["legacy", "migrating", "cutover", "csi"], var.shared_storage_stage)
+    error_message = "shared_storage_stage must be one of: legacy, migrating, cutover, csi."
+  }
+}
+
+variable "shared_volume_capacity_gb" {
+  description = "Capacity of the CSI-provisioned Filestore volume in GiB (Basic HDD minimum 100). Can grow in place, never shrink."
+  type        = number
+  default     = 100
+}
+
 variable "filestore_tier" {
-  description = "Filestore service tier."
+  description = "Service tier of the legacy Filestore instance."
   type        = string
   default     = "BASIC_HDD"
 }
 
 variable "filestore_capacity_gb" {
-  description = "Filestore capacity in GB (minimum 1024 for BASIC_HDD)."
+  description = "Capacity of the legacy Filestore instance in GB (minimum 1024 for BASIC_HDD)."
   type        = number
   default     = 1024
 }
 
 variable "filestore_share_name" {
-  description = "Name of the Filestore file share."
+  description = "Name of the legacy Filestore instance's file share."
   type        = string
   default     = "prodigy_data"
 }

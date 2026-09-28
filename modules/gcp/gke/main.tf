@@ -225,6 +225,14 @@ resource "google_container_cluster" "primary" {
     workload_pool = "${var.gcp_project}.svc.id.goog"
   }
 
+  # Provisions the shared volume's Filestore instance (see filestore.tf).
+  # Updatable in place.
+  addons_config {
+    gcp_filestore_csi_driver_config {
+      enabled = true
+    }
+  }
+
   # Cost allocation: per-pod attribution of node costs in the billing
   # export, keyed by pod k8s labels. Updatable in place.
   cost_management_config {

@@ -34,10 +34,6 @@ output "cloud_storage_url" {
   value       = "gs://${google_storage_bucket.data-bucket.name}"
 }
 
-output "filestore_ip" {
-  value = module.cluster.filestore_ip
-}
-
 output "nfs_pvc_name" {
   value = module.cluster.nfs_pvc_name
 }

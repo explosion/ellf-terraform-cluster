@@ -96,6 +96,8 @@ module "cluster" {
 
   enable_cost_allocation = var.enable_cost_allocation
 
+  shared_storage_stage = var.shared_storage_stage
+
   domain = var.domain
 
   database_password = module.database.database_password
