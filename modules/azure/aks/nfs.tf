@@ -14,6 +14,14 @@ resource "azurerm_storage_account" "nfs" {
   https_traffic_only_enabled = false
 }
 
+resource "azurerm_management_lock" "nfs" {
+  count      = var.deletion_protection ? 1 : 0
+  name       = "${var.prefix}-nfs-no-delete"
+  scope      = azurerm_storage_account.nfs.id
+  lock_level = "CanNotDelete"
+  notes      = "Holds the cluster's shared volume. Lifted only by 'ellf infra destroy --delete-data'."
+}
+
 resource "azurerm_storage_share" "nfs" {
   name               = "prodigy-data"
   storage_account_id = azurerm_storage_account.nfs.id

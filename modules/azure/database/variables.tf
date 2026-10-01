@@ -50,3 +50,9 @@ variable "storage_mb" {
   type        = number
   default     = 32768
 }
+
+variable "deletion_protection" {
+  description = "Put a CanNotDelete lock on the server. Only lifted for a deliberate data-deleting destroy."
+  type        = bool
+  default     = true
+}

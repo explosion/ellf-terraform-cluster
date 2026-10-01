@@ -173,7 +173,7 @@ resource "aws_iam_role_policy" "nodes_ecr_push" {
 
 resource "aws_s3_bucket" "data" {
   bucket        = "${var.network_name}-data"
-  force_destroy = true
+  force_destroy = var.allow_data_deletion
 }
 
 # Access is IAM-only and never public; objects are shared through
@@ -206,6 +206,9 @@ module "database" {
   subnet_ids = aws_subnet.private[*].id
   user       = var.database_user
   name       = var.database_name
+
+  deletion_protection = !var.allow_data_deletion
+
   depends_on = [aws_vpc.cluster]
 }
 

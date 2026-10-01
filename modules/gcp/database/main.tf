@@ -11,11 +11,15 @@ locals {
 resource "google_sql_database_instance" "default" {
   # Need to leave name unspecified here, because we need it
   # it to be automatically assigned.
-  database_version    = "POSTGRES_14"
-  region              = local.gcp_region
-  deletion_protection = false
+  database_version = "POSTGRES_14"
+  region           = local.gcp_region
+  # Blocks terraform from deleting the instance; deleting it also deletes
+  # its automated backups, i.e. every annotation the cluster holds.
+  deletion_protection = var.deletion_protection
   settings {
     tier = "db-g1-small"
+    # The API-side counterpart: also blocks deletes from the console/gcloud.
+    deletion_protection_enabled = var.deletion_protection
     ip_configuration {
       ipv4_enabled                                  = var.ipv4_enabled
       private_network                               = var.network_id

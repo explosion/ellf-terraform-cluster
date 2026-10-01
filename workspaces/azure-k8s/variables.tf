@@ -82,3 +82,9 @@ variable "data_storage_account_name" {
   description = "Globally unique storage account name for data (alphanumeric, 3-24 chars)."
   type        = string
 }
+
+variable "allow_data_deletion" {
+  description = "Lift the deletion protection on the cluster's data: the database, the data storage account and the NFS storage account. Off except for a deliberate 'ellf infra destroy --delete-data'."
+  type        = bool
+  default     = false
+}

@@ -126,3 +126,9 @@ variable "database_password" {
   type        = string
   sensitive   = true
 }
+
+variable "deletion_protection" {
+  description = "Put a CanNotDelete lock on the NFS storage account. Only lifted for a deliberate data-deleting destroy."
+  type        = bool
+  default     = true
+}

@@ -23,3 +23,9 @@ variable "ipv4_enabled" {
   type        = bool
   default     = false
 }
+
+variable "deletion_protection" {
+  description = "Refuse to delete the instance (in terraform and in the Cloud SQL API). Deleting it also deletes its automated backups, so this is only lifted for a deliberate data-deleting destroy."
+  type        = bool
+  default     = true
+}

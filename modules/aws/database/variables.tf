@@ -39,3 +39,9 @@ variable "engine_version" {
   type        = string
   default     = "14"
 }
+
+variable "deletion_protection" {
+  description = "Refuse to delete the instance. Only lifted for a deliberate data-deleting destroy, which still leaves a final snapshot."
+  type        = bool
+  default     = true
+}

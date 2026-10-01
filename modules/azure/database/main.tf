@@ -23,6 +23,17 @@ resource "azurerm_postgresql_flexible_server" "default" {
   zone                  = "1"
 }
 
+# Azure has no deletion-protection flag on the server itself; a CanNotDelete
+# lock is the equivalent, and also blocks deleting the resource group around
+# it from the portal or az.
+resource "azurerm_management_lock" "server" {
+  count      = var.deletion_protection ? 1 : 0
+  name       = "${var.prefix}-postgres-no-delete"
+  scope      = azurerm_postgresql_flexible_server.default.id
+  lock_level = "CanNotDelete"
+  notes      = "Holds the cluster's annotations. Lifted only by 'ellf infra destroy --delete-data'."
+}
+
 resource "azurerm_postgresql_flexible_server_database" "default" {
   name      = var.name
   server_id = azurerm_postgresql_flexible_server.default.id

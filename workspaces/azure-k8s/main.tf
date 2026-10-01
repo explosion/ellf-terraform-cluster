@@ -120,6 +120,14 @@ resource "azurerm_storage_account" "data" {
   allow_nested_items_to_be_public = false
 }
 
+resource "azurerm_management_lock" "data" {
+  count      = var.allow_data_deletion ? 0 : 1
+  name       = "data-storage-no-delete"
+  scope      = azurerm_storage_account.data.id
+  lock_level = "CanNotDelete"
+  notes      = "Holds the cluster's files. Lifted only by 'ellf infra destroy --delete-data'."
+}
+
 resource "azurerm_storage_container" "data" {
   name               = "data"
   storage_account_id = azurerm_storage_account.data.id
@@ -138,6 +146,8 @@ module "database" {
   private_dns_zone_id = azurerm_private_dns_zone.postgres.id
   user                = var.database_user
   name                = var.database_name
+
+  deletion_protection = !var.allow_data_deletion
 
   depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
 }
@@ -161,6 +171,8 @@ module "cluster" {
   storage_account_name = var.storage_account_name
 
   storage_container_ids = [azurerm_storage_container.data.id]
+
+  deletion_protection = !var.allow_data_deletion
 
   database_password = module.database.database_password
 }

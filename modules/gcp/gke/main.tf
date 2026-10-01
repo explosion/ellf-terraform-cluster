@@ -301,6 +301,11 @@ resource "google_container_node_pool" "system" {
 
   lifecycle {
     ignore_changes = [
+      # initial_node_count is ForceNew and the provider reads the live node
+      # count back into it, so without this an apply while the cluster is
+      # paused ('ellf infra pause' resizes this pool to 0) would destroy and
+      # recreate the pool.
+      initial_node_count,
       node_config[0].resource_labels,
       node_config[0].kubelet_config,
     ]

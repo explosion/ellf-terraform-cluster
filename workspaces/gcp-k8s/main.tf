@@ -42,7 +42,7 @@ resource "google_storage_bucket" "data-bucket" {
   name          = "${var.gcp_project}-data"
   project       = var.gcp_project
   location      = var.bucket_location
-  force_destroy = true
+  force_destroy = var.allow_data_deletion
 
   # Access is IAM-only and never public; objects are shared through
   # short-lived signed URLs instead.
@@ -61,7 +61,10 @@ module "database" {
   network_id  = google_compute_network.cluster.id
   user        = var.database_user
   name        = var.database_name
-  depends_on  = [google_compute_network.cluster]
+
+  deletion_protection = !var.allow_data_deletion
+
+  depends_on = [google_compute_network.cluster]
 }
 
 # ---------

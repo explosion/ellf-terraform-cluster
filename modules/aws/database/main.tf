@@ -3,6 +3,13 @@ resource "random_string" "password" {
   special = false
 }
 
+# Snapshot names must be unique per account and region, so a destroy after
+# an earlier destroy-and-recreate cycle doesn't collide with the snapshot
+# that one left behind.
+resource "random_id" "final_snapshot" {
+  byte_length = 4
+}
+
 resource "aws_db_subnet_group" "default" {
   name       = "${var.prefix}-db-subnet-group"
   subnet_ids = var.subnet_ids
@@ -43,9 +50,12 @@ resource "aws_db_instance" "default" {
   db_subnet_group_name   = aws_db_subnet_group.default.name
   vpc_security_group_ids = [aws_security_group.database.id]
 
-  publicly_accessible     = false
-  skip_final_snapshot     = true
-  backup_retention_period = 7
-  backup_window           = "19:19-19:49"
-  deletion_protection     = false
+  publicly_accessible = false
+  # Automated backups are deleted with the instance; the final snapshot is
+  # what survives a destroy.
+  skip_final_snapshot       = false
+  final_snapshot_identifier = "${var.prefix}-postgres-final-${random_id.final_snapshot.hex}"
+  backup_retention_period   = 7
+  backup_window             = "19:19-19:49"
+  deletion_protection       = var.deletion_protection
 }

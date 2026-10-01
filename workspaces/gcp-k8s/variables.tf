@@ -133,3 +133,9 @@ variable "billing_export" {
   default = null
 }
 
+
+variable "allow_data_deletion" {
+  description = "Lift the deletion protection on the cluster's data: the database and the data bucket (which is then emptied on destroy). Off except for a deliberate 'ellf infra destroy --delete-data'."
+  type        = bool
+  default     = false
+}
