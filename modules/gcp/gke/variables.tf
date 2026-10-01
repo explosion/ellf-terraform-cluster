@@ -221,3 +221,18 @@ variable "database_password" {
   type        = string
   sensitive   = true
 }
+
+variable "hibernate" {
+  description = "Delete the GKE cluster, its node pools and everything in it, keeping the network, IAM, keypair and all data outside the cluster (database, bucket, Filestore). Set by 'ellf infra hibernate', which first removes the in-cluster resources from state; set back by 'ellf infra wake'."
+  type        = bool
+  default     = false
+}
+
+variable "existing_shared_volume" {
+  description = "A CSI-provisioned Filestore instance to bind the shared volume to instead of provisioning a new one: its CSI volume handle (modeInstance/<zone>/<instance>/<share>) and IP. Recorded by 'ellf infra hibernate' so a woken cluster gets its data back."
+  type = object({
+    handle = string
+    ip     = string
+  })
+  default = null
+}

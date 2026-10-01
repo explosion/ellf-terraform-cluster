@@ -99,7 +99,10 @@ module "cluster" {
 
   enable_cost_allocation = var.enable_cost_allocation
 
-  shared_storage_stage = var.shared_storage_stage
+  shared_storage_stage   = var.shared_storage_stage
+  existing_shared_volume = var.existing_shared_volume
+
+  hibernate = var.hibernate
 
   domain = var.domain
 

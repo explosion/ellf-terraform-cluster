@@ -39,6 +39,12 @@ resource "google_sql_database_instance" "default" {
 
   depends_on = [google_service_networking_connection.db_vpc_connection]
 
+  lifecycle {
+    # 'ellf infra pause' / 'hibernate' stop the instance (NEVER) and resume /
+    # wake start it again; an apply in between must not start it behind
+    # their back.
+    ignore_changes = [settings[0].activation_policy]
+  }
 }
 
 resource "random_string" "password" {

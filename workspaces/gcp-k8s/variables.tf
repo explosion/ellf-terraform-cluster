@@ -139,3 +139,18 @@ variable "allow_data_deletion" {
   type        = bool
   default     = false
 }
+
+variable "hibernate" {
+  description = "Delete the GKE cluster and everything in it, keeping every piece of data. Managed by 'ellf infra hibernate' / 'ellf infra wake'; see the gke module's variable."
+  type        = bool
+  default     = false
+}
+
+variable "existing_shared_volume" {
+  description = "The Filestore instance to bind the shared volume to on a recreated cluster. Recorded by 'ellf infra hibernate'; see the gke module's variable."
+  type = object({
+    handle = string
+    ip     = string
+  })
+  default = null
+}

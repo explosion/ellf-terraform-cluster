@@ -1,32 +1,28 @@
 output "cluster_name" {
   description = "Name of the GKE cluster."
-  value       = google_container_cluster.primary.name
+  value       = "${var.prefix}-gke"
 }
 
 output "cluster_endpoint" {
   description = "Endpoint of the GKE cluster."
-  value       = google_container_cluster.primary.endpoint
+  value       = try(google_container_cluster.primary[0].endpoint, null)
   sensitive   = true
 }
 
 output "cluster_ca_certificate" {
   description = "Base64-encoded CA certificate of the GKE cluster."
-  value       = google_container_cluster.primary.master_auth[0].cluster_ca_certificate
+  value       = try(google_container_cluster.primary[0].master_auth[0].cluster_ca_certificate, null)
   sensitive   = true
 }
 
 output "cluster_location" {
   description = "Location (zone) of the GKE cluster."
-  value       = google_container_cluster.primary.location
+  value       = var.gcp_zone
 }
 
 output "nfs_pvc_name" {
   description = "Name of the Kubernetes PVC for the shared volume workloads should mount (depends on shared_storage_stage)."
-  value = (
-    local.use_csi_volume
-    ? kubernetes_persistent_volume_claim_v1.filestore[0].metadata[0].name
-    : kubernetes_persistent_volume_claim_v1.nfs[0].metadata[0].name
-  )
+  value       = local.use_csi_volume ? local.csi_pvc_name : local.nfs_pvc_name
 }
 
 output "node_service_account_email" {
@@ -36,7 +32,7 @@ output "node_service_account_email" {
 
 output "get_credentials_command" {
   description = "gcloud command to configure kubectl."
-  value       = "gcloud container clusters get-credentials ${google_container_cluster.primary.name} --zone ${google_container_cluster.primary.location} --project ${var.gcp_project}"
+  value       = "gcloud container clusters get-credentials ${var.prefix}-gke --zone ${var.gcp_zone} --project ${var.gcp_project}"
 }
 
 output "ingress_ip" {
@@ -46,7 +42,7 @@ output "ingress_ip" {
 
 output "infra_secret_name" {
   description = "Name of the Kubernetes Secret containing infra credentials."
-  value       = kubernetes_secret_v1.infra.metadata[0].name
+  value       = local.infra_secret_name
 }
 
 output "broker_public_key_pem" {

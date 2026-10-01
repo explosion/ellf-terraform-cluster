@@ -8,9 +8,10 @@ resource "tls_private_key" "broker" {
 }
 
 resource "kubernetes_secret_v1" "infra" {
+  count = local.in_cluster ? 1 : 0
   metadata {
-    name      = "ellf-infra"
-    namespace = kubernetes_namespace_v1.app.metadata[0].name
+    name      = local.infra_secret_name
+    namespace = kubernetes_namespace_v1.app[0].metadata[0].name
   }
 
   data = {
@@ -20,4 +21,13 @@ resource "kubernetes_secret_v1" "infra" {
   }
 
   depends_on = [kubernetes_namespace_v1.app]
+}
+
+locals {
+  infra_secret_name = "ellf-infra"
+}
+
+moved {
+  from = kubernetes_secret_v1.infra
+  to   = kubernetes_secret_v1.infra[0]
 }

@@ -9,6 +9,15 @@ locals {
   legacy_filestore = var.shared_storage_stage != "csi"
   csi_filestore    = var.shared_storage_stage != "legacy"
   use_csi_volume   = contains(["cutover", "csi"], var.shared_storage_stage)
+
+  # Everything in-cluster goes with the cluster when hibernated. The
+  # Filestore instances themselves are outside it and stay.
+  in_cluster    = !var.hibernate
+  csi_pvc_name  = "prodigy-shared"
+  nfs_pvc_name  = "prodigy-nfs"
+  existing_csi  = local.csi_filestore && var.existing_shared_volume != null
+  csi_share     = try(split("/", var.existing_shared_volume.handle)[3], "")
+  csi_static_pv = "prodigy-shared-pv"
 }
 
 resource "google_filestore_instance" "nfs" {
@@ -41,15 +50,21 @@ resource "google_filestore_instance" "nfs" {
 # Kubernetes PV + PVC pointing to the legacy instance
 # ----------------------------------------------------
 
+# Has nothing to connect to while hibernated, which is fine because nothing
+# in-cluster exists then. 'ellf infra hibernate' removes the in-cluster
+# resources from state before the apply that deletes the cluster, since
+# they can't be destroyed through a provider pointing at a cluster that's
+# going away in the same plan.
 provider "kubernetes" {
-  host                   = "https://${google_container_cluster.primary.endpoint}"
+  host                   = try("https://${google_container_cluster.primary[0].endpoint}", "")
   token                  = data.google_client_config.default.access_token
-  cluster_ca_certificate = base64decode(google_container_cluster.primary.master_auth[0].cluster_ca_certificate)
+  cluster_ca_certificate = try(base64decode(google_container_cluster.primary[0].master_auth[0].cluster_ca_certificate), "")
 }
 
 data "google_client_config" "default" {}
 
 resource "kubernetes_namespace_v1" "app" {
+  count = local.in_cluster ? 1 : 0
   metadata {
     name = var.k8s_namespace
   }
@@ -60,7 +75,7 @@ resource "kubernetes_namespace_v1" "app" {
 }
 
 resource "kubernetes_storage_class_v1" "nfs" {
-  count = local.legacy_filestore ? 1 : 0
+  count = local.in_cluster && local.legacy_filestore ? 1 : 0
   metadata {
     name = "nfs"
   }
@@ -74,7 +89,7 @@ resource "kubernetes_storage_class_v1" "nfs" {
 }
 
 resource "kubernetes_persistent_volume_v1" "nfs" {
-  count = local.legacy_filestore ? 1 : 0
+  count = local.in_cluster && local.legacy_filestore ? 1 : 0
   metadata {
     name = "prodigy-nfs-pv"
   }
@@ -98,10 +113,10 @@ resource "kubernetes_persistent_volume_v1" "nfs" {
 }
 
 resource "kubernetes_persistent_volume_claim_v1" "nfs" {
-  count = local.legacy_filestore ? 1 : 0
+  count = local.in_cluster && local.legacy_filestore ? 1 : 0
   metadata {
-    name      = "prodigy-nfs"
-    namespace = kubernetes_namespace_v1.app.metadata[0].name
+    name      = local.nfs_pvc_name
+    namespace = kubernetes_namespace_v1.app[0].metadata[0].name
   }
 
   spec {
@@ -145,7 +160,7 @@ moved {
 # ---------------------------------------------------
 
 resource "kubernetes_storage_class_v1" "filestore" {
-  count = local.csi_filestore ? 1 : 0
+  count = local.in_cluster && local.csi_filestore ? 1 : 0
   metadata {
     name = "filestore-standard-retain"
   }
@@ -175,15 +190,18 @@ resource "kubernetes_storage_class_v1" "filestore" {
 }
 
 resource "kubernetes_persistent_volume_claim_v1" "filestore" {
-  count = local.csi_filestore ? 1 : 0
+  count = local.in_cluster && local.csi_filestore ? 1 : 0
   metadata {
-    name      = "prodigy-shared"
-    namespace = kubernetes_namespace_v1.app.metadata[0].name
+    name      = local.csi_pvc_name
+    namespace = kubernetes_namespace_v1.app[0].metadata[0].name
   }
 
   spec {
     access_modes       = ["ReadWriteMany"]
     storage_class_name = kubernetes_storage_class_v1.filestore[0].metadata[0].name
+    # Bound to the existing instance when there is one, instead of having
+    # the driver provision a new, empty one.
+    volume_name = local.existing_csi ? kubernetes_persistent_volume_v1.filestore[0].metadata[0].name : null
 
     resources {
       requests = {
@@ -197,4 +215,45 @@ resource "kubernetes_persistent_volume_claim_v1" "filestore" {
   timeouts {
     create = "20m"
   }
+}
+
+# A Filestore instance the CSI driver provisioned for an earlier incarnation
+# of the cluster ('ellf infra hibernate' deletes the cluster, the Retain
+# reclaim policy keeps the instance). Registered statically so the PVC binds
+# to it rather than to a new, empty instance.
+resource "kubernetes_persistent_volume_v1" "filestore" {
+  count = local.in_cluster && local.existing_csi ? 1 : 0
+  metadata {
+    name = local.csi_static_pv
+  }
+
+  spec {
+    capacity = {
+      storage = "${var.shared_volume_capacity_gb}Gi"
+    }
+    access_modes                     = ["ReadWriteMany"]
+    persistent_volume_reclaim_policy = "Retain"
+    storage_class_name               = kubernetes_storage_class_v1.filestore[0].metadata[0].name
+
+    claim_ref {
+      namespace = var.k8s_namespace
+      name      = local.csi_pvc_name
+    }
+
+    persistent_volume_source {
+      csi {
+        driver        = "filestore.csi.storage.gke.io"
+        volume_handle = var.existing_shared_volume.handle
+        volume_attributes = {
+          ip     = var.existing_shared_volume.ip
+          volume = local.csi_share
+        }
+      }
+    }
+  }
+}
+
+moved {
+  from = kubernetes_namespace_v1.app
+  to   = kubernetes_namespace_v1.app[0]
 }

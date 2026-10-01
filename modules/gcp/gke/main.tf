@@ -101,7 +101,9 @@ resource "google_service_account_iam_member" "workload_identity" {
   # binding after the cluster create. With a plain string the binding races
   # the cluster create and fails on a fresh project with
   # "Error 400: Identity Pool does not exist".
-  member = "serviceAccount:${google_container_cluster.primary.workload_identity_config[0].workload_pool}[${var.k8s_namespace}/${var.k8s_service_account}]"
+  # While hibernated the cluster doesn't exist; the pool's name is fixed, so
+  # the binding keeps the same member and survives untouched.
+  member = "serviceAccount:${try(google_container_cluster.primary[0].workload_identity_config[0].workload_pool, "${var.gcp_project}.svc.id.goog")}[${var.k8s_namespace}/${var.k8s_service_account}]"
 }
 
 # --------
@@ -190,9 +192,16 @@ resource "terraform_data" "vpc_peering_dependency" {
 }
 
 resource "google_container_cluster" "primary" {
+  count = var.hibernate ? 0 : 1
+
   name     = "${var.prefix}-gke"
   location = var.gcp_zone
   project  = var.gcp_project
+
+  # The provider defaults this to true. The cluster holds no data (that's in
+  # the database, bucket and Filestore, which are protected themselves),
+  # and 'ellf infra hibernate' deletes it by design.
+  deletion_protection = false
 
   # Use a separately managed node pool
   remove_default_node_pool = true
@@ -261,9 +270,11 @@ resource "google_container_cluster" "primary" {
 # -----------------
 
 resource "google_container_node_pool" "system" {
+  count = var.hibernate ? 0 : 1
+
   name     = "system"
-  location = google_container_cluster.primary.location
-  cluster  = google_container_cluster.primary.name
+  location = google_container_cluster.primary[0].location
+  cluster  = google_container_cluster.primary[0].name
   project  = var.gcp_project
 
   initial_node_count = var.system_node_pool_size
@@ -317,11 +328,11 @@ resource "google_container_node_pool" "system" {
 # -----------------
 
 resource "google_container_node_pool" "workers" {
-  for_each = var.worker_types
+  for_each = var.hibernate ? {} : var.worker_types
 
   name     = each.value.name
-  location = google_container_cluster.primary.location
-  cluster  = google_container_cluster.primary.name
+  location = google_container_cluster.primary[0].location
+  cluster  = google_container_cluster.primary[0].name
   project  = var.gcp_project
 
   # Autoscaling: min/max are always provided by the CLI
@@ -384,4 +395,16 @@ resource "google_container_node_pool" "workers" {
       node_config[0].kubelet_config,
     ]
   }
+}
+
+# The cluster and system pool predate hibernation; keep existing state
+# attached instead of planning a destroy and recreate.
+moved {
+  from = google_container_cluster.primary
+  to   = google_container_cluster.primary[0]
+}
+
+moved {
+  from = google_container_node_pool.system
+  to   = google_container_node_pool.system[0]
 }
