@@ -63,6 +63,12 @@ resource "google_sql_database" "default" {
   instance  = google_sql_database_instance.default.name
   charset   = "UTF8"
   collation = "en_US.UTF8"
+
+  # The instance's deletion_protection doesn't cover the databases inside
+  # it: a destroy that the instance refused still dropped this one (prod,
+  # 2026-11-06). Abandoning it leaves the data with the instance, which
+  # only 'ellf infra destroy --delete-data' deletes.
+  deletion_policy = "ABANDON"
 }
 
 resource "google_sql_user" "user" {
