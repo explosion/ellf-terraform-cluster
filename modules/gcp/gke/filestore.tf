@@ -72,6 +72,12 @@ resource "kubernetes_namespace_v1" "app" {
   depends_on = [
     google_container_node_pool.system,
   ]
+
+  lifecycle {
+    # The chart's install (helm --create-namespace) labels the namespace
+    # too; taking its labels away again on every apply gains nothing.
+    ignore_changes = [metadata[0].labels]
+  }
 }
 
 resource "kubernetes_storage_class_v1" "nfs" {
