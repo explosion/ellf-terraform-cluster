@@ -62,6 +62,7 @@ module "database" {
   user        = var.database_user
   name        = var.database_name
 
+  ipv4_enabled        = var.database_ipv4_enabled
   deletion_protection = !var.allow_data_deletion
 
   depends_on = [google_compute_network.cluster]

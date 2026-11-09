@@ -134,6 +134,12 @@ variable "billing_export" {
 }
 
 
+variable "database_ipv4_enabled" {
+  description = "Give the database a public IP. Off for customer clusters, which stay private; Explosion's own clusters turn it on so operators' cloud-sql-proxy tooling can reach them (it connects over the public IP). With no authorized networks, the public IP only admits cloud-sql-proxy, which checks IAM."
+  type        = bool
+  default     = false
+}
+
 variable "allow_data_deletion" {
   description = "Lift the deletion protection on the cluster's data: the database and the data bucket (which is then emptied on destroy). Off except for a deliberate 'ellf infra destroy --delete-data'."
   type        = bool
